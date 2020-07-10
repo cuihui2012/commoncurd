@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.common.curd.commoncurd.dao.ICommonApiDao">
+	<!-- 查看视图是否存在 -->
+	<select id="getViewNameInfo"  parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT COUNT(1)
+		  FROM (SELECT VIEW_NAME
+				  FROM USER_VIEWS
+				UNION
+				SELECT TABLE_NAME VIEW_NAME FROM USER_TABLES)
+		 WHERE VIEW_NAME = UPPER(#{viewName})
+ 	</select>
+
+	<!-- 通过视图查询数据 -->
+	<select id="getDataByViewName" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT * FROM ${viewName} WHERE 1 = 1 ${condition}
+ 	</select>
+
+	<!-- 查询视图/表字段是否存在 -->
+	<select id="getColNameInfo" parameterType="java.lang.String" resultType="java.util.Map">
+		SELECT TABLE_NAME,
+			   COLUMN_NAME,
+			   DATA_TYPE,
+			   DATA_LENGTH,
+			   DATA_PRECISION,
+			   DATA_SCALE,
+			   NULLABLE
+           FROM USER_TAB_COLUMNS A
+          WHERE A.TABLE_NAME = UPPER(#{viewName})
+            AND A.COLUMN_NAME = UPPER(#{colName})
+	</select>
+
+	<!-- 查看表是否存在 -->
+	<select id="getTableNameInfo"  parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT COUNT(1) FROM USER_TABLES WHERE 1 = 1
+		<if test="tableName != null and tableName != ''">
+			AND TABLE_NAME = UPPER(#{tableName})
+		</if>
+	</select>
+
+	<!-- 查看序列是否存在 -->
+	<select id="getSeqNameInfo" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT COUNT(1) FROM USER_SEQUENCES WHERE SEQUENCE_NAME = UPPER(#{seqName})
+	</select>
+
+	<!-- 获取序列值 -->
+	<select id="getNextSeqValue"  parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT ${seqName}.NEXTVAL FROM dual
+	</select>
+
+	<!-- 动态修改表数据 -->
+	<update id="addOrUpdateDataByTableNames" parameterType="java.util.Map">
+		MERGE INTO ${tableName} A
+				USING (SELECT ${selectStr}
+							  ,SYSDATE CJSJ
+						 FROM DUAL) B
+				ON (${onStr})
+				WHEN MATCHED THEN
+				  UPDATE
+					 SET ${setStr},A.CJSJ = B.CJSJ
+				WHEN NOT MATCHED THEN
+				  INSERT
+					(${insertStr},A.CJSJ)
+				  VALUES
+					(${valuesStr},B.CJSJ)
+	</update>
+
+	<!-- 软删除数据接口 -->
+	<delete id="softDeleteDataByTableName" parameterType="java.util.Map">
+		UPDATE ${tableName} SET ${flagCol} = #{flagColVal}
+		WHERE ${primaryKey} IN
+		<foreach item="item" index="index" collection="primaryKeyVal"
+				 open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+	<!-- 硬删除数据接口 -->
+	<delete id="hardDeleteDataByTableName" parameterType="java.util.Map">
+		DELETE FROM ${tableName}
+		WHERE ${primaryKey} IN
+		<foreach item="item" index="index" collection="primaryKeyVal"
+				 open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	<!-- 获取外部接口url -->
+	<select id="getExternalUrlInfo"  parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT A.V_ID, A.V_TYPE, A.V_URL
+		  FROM API_URL_CONFIG A
+		 WHERE A.V_ID = #{urlID}
+	</select>
+
+	<insert id="collectRemoteAddr" parameterType="java.lang.String">
+		MERGE INTO COLLECT_REMOTE_ADDR A
+		USING (SELECT #{remoteAddr} REMOTE_ADDR FROM DUAL) B
+		ON (A.REMOTE_ADDR = B.REMOTE_ADDR)
+		WHEN MATCHED THEN
+		  UPDATE SET A.REMOTE_COUNT = A.REMOTE_COUNT + 1, A.UPDATE_TIME = SYSDATE
+		WHEN NOT MATCHED THEN
+		  INSERT (A.REMOTE_ADDR) VALUES (B.REMOTE_ADDR)
+	</insert>
+</mapper>

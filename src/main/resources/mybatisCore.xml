@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"classpath:spring-config/mybatis-3-config.dtd">
+<configuration>
+	<plugins>
+		<plugin interceptor="com.common.curd.commoncurd.interceptor.PagenationInterceptor">
+            <!-- 分页拦截器配置数据库类型 -->
+			<property name="dbType" value="oracle" />
+		</plugin>
+	</plugins>
+</configuration>

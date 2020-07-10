@@ -1,4 +1,4 @@
 # commoncurd
 万能后台项目
 
-详情见文档commoncurd.docx
+详情见文档 commoncurd.docx

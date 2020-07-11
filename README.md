@@ -1,13 +1,13 @@
 # commoncurd
-万能后台项目
-详情见文档 commoncurd.docx
+万能后台项目  
+详情见文档：[commoncurd.docx]()
 
-# 公共查询接口(支持分页、支持跨库)（/common/getDataByViewName）
+## 公共查询接口(支持分页、支持跨库)（/common/getDataByViewName）
 接口调用：http://localhost:8080/common/getDataByViewName?viewName=COMMON_TEST
 
-# 公共增加/修改接口(支持多表修改、支持事务、支持跨库)（/common/addOrUpdateDataByTableNames）
-接口调用：http://localhost:8080/common/addOrUpdateDataByTableNames
-参数样例：
+## 公共增加/修改接口(支持多表修改、支持事务、支持跨库)（/common/addOrUpdateDataByTableNames）
+接口调用：http://localhost:8080/common/addOrUpdateDataByTableNames  
+参数样例：  
 {
 	"paramList": [
 		{
@@ -33,9 +33,9 @@
 	]
 }
 
-# 公共删除接口(支持多表删除、支持事务、支持跨库)（/common/deleteDataByTableNames）
-接口调用：http://localhost:8080/common/deleteDataByTableNames
-参数样例：
+## 公共删除接口(支持多表删除、支持事务、支持跨库)（/common/deleteDataByTableNames）
+接口调用：http://localhost:8080/common/deleteDataByTableNames  
+参数样例：  
 {
 	"deleteList":[
 		{
@@ -57,9 +57,9 @@
 	]
 }
 
-# 公共增删改接口(支持多表、支持事务、支持跨库)（/common/addOrUpdateOrDeleteDataByTableNames）
-接口调用：http://localhost:8080/common/addOrUpdateOrDeleteDataByTableNames
-参数样例：
+## 公共增删改接口(支持多表、支持事务、支持跨库)（/common/addOrUpdateOrDeleteDataByTableNames）
+接口调用：http://localhost:8080/common/addOrUpdateOrDeleteDataByTableNames  
+参数样例：  
 {
 	"paramList": [
         {
@@ -103,9 +103,9 @@
 	]
 }
 
-# 公共接口-外部接口调用(url支持get/post请求)（/common/executeExternalAPI）
-接口调用：http://localhost:8080/common/executeExternalAPI
-参数样例：
+## 公共接口-外部接口调用(url支持get/post请求)（/common/executeExternalAPI）
+接口调用：http://localhost:8080/common/executeExternalAPI  
+参数样例：  
 {
 	"urlID" : "aoudbtn",
 	"urlParam" : {

@@ -1,6 +1,6 @@
 # commoncurd
 万能后台项目  
-详情见文档：[commoncurd.docx]()
+详情见文档：commoncurd.docx
 
 ## 公共查询接口(支持分页、支持跨库)（/common/getDataByViewName）
 接口调用：http://localhost:8080/common/getDataByViewName?viewName=COMMON_TEST

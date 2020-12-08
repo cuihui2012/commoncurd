@@ -121,7 +121,7 @@ public class PagenationInterceptor implements Interceptor {
             pageSql.append(page.getLtSortName()).append(" ").append(page.getLtSortName());
         }
         pageSql.append(" ) A ");
-        pageSql.append(") B WHERE B.RN < " + (offset + page.getRecordPerPage()) + " AND B.RN >= " + offset + "");
+        pageSql.append("WHERE ROWNUM < " + (offset + page.getRecordPerPage()) + ") B WHERE B.RN >= " + offset + "");
         return pageSql.toString();
     }
 

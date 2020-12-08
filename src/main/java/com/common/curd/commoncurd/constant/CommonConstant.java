@@ -16,7 +16,6 @@ public class CommonConstant {
     //简单sql防注入字段
     public static final List<String> sqlList = Lists.newArrayList("truncate",
             "insert",
-            "select",
             "delete",
             "update ",
             "declare",

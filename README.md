@@ -4,6 +4,10 @@
 
 ## 公共查询接口(支持分页、支持跨库)（/common/getDataByViewName）
 接口调用：http://localhost:8080/common/getDataByViewName?viewName=COMMON_TEST
+加密接口：http://localhost:8080/common/getDataByViewName?viewName=Q09NTU9OX1RFU1Q=
+
+接口调用：http://localhost:8080/common/getDataByViewName?viewName=COMMON_TEST&condition=UNAME = '1'(表名base64转码,condition参数base64转码且生成MD5)
+加密接口：http://localhost:8080/common/getDataByViewName?viewName=Q09NTU9OX1RFU1Q=&condition=VU5BTUUgPSAnMSc=&key=918BEC1653426F05
 
 ## 公共增加/修改接口(支持多表修改、支持事务、支持跨库)（/common/addOrUpdateDataByTableNames）
 接口调用：http://localhost:8080/common/addOrUpdateDataByTableNames  

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.common.curd.commoncurd.dao.ICommonApiAuthDao">
+	<!-- 查询IP配置详情 -->
+	<select id="getIPConfigInfo"  parameterType="java.lang.String" resultType="com.common.curd.commoncurd.model.IPConfigVo">
+		SELECT * FROM T_COMMON_IP_CONFIG_INFO WHERE ip_address = #{ipAddress}
+ 	</select>
+
+	<!-- 查询IP配置列表 -->
+	<select id="getIPConfigList" parameterType="java.util.Map" resultType="com.common.curd.commoncurd.model.IPConfigVo">
+		SELECT * FROM T_COMMON_IP_CONFIG_INFO where 1 = 1
+		<if test='ipAddress != null and ipAddress != ""'>
+			AND ip_address like '%' || #{ipAddress} || '%'
+		</if>
+		order by ip_address, iid
+	</select>
+
+	<!-- 新增修改IP配置信息 -->
+	<insert id="addOrUpdateIPConfigInfo" parameterType="java.util.Map">
+		MERGE INTO T_COMMON_IP_CONFIG_INFO A
+		USING (SELECT #{iid,jdbcType=VARCHAR} IID,
+					  #{ip_address,jdbcType=VARCHAR} IP_ADDRESS,
+					  #{ip_desc,jdbcType=VARCHAR} IP_DESC,
+					  #{is_used,jdbcType=VARCHAR} IS_USED,
+					  #{is_opend,jdbcType=VARCHAR} IS_OPEND
+				 FROM DUAL) B
+		ON (A.IID = B.IID)
+		WHEN MATCHED THEN
+		  UPDATE
+			 SET A.IP_ADDRESS  = B.IP_ADDRESS,
+				 A.IP_DESC     = B.IP_DESC,
+				 A.IS_USED     = B.IS_USED,
+				 A.IS_OPEND    = B.IS_OPEND,
+				 A.UPDATE_TIME = SYSDATE
+		WHEN NOT MATCHED THEN
+		  INSERT
+			(A.IP_ADDRESS, A.IP_DESC, A.IS_USED, A.IS_OPEND)
+		  VALUES
+			(B.IP_ADDRESS, B.IP_DESC, B.IS_USED, B.IS_OPEND)
+	</insert>
+
+	<!-- 级联删除IP配置信息 -->
+	<insert id="deleteIPConfigInfo" parameterType="java.lang.String">
+		BEGIN
+		  DELETE FROM T_COMMON_VIEW_COLUMN_RELATION CR
+		   WHERE CR.VID IN
+				 (SELECT VR.VID FROM T_COMMON_IP_VIEW_RELATION VR WHERE VR.IID = #{iid});
+
+		  DELETE FROM T_COMMON_IP_VIEW_RELATION VR WHERE VR.IID = #{iid};
+		  DELETE FROM T_COMMON_IP_CONFIG_INFO IR WHERE IR.IID = #{iid};
+		END;
+	</insert>
+
+	<select id="getIPViewList"  parameterType="java.util.Map" resultType="com.common.curd.commoncurd.model.IPViewRelaVo">
+		SELECT VR.*, CI.IP_ADDRESS, TC.COMMENTS VIEW_DESC
+		FROM(
+			SELECT * FROM T_COMMON_IP_VIEW_RELATION WHERE 1 = 1
+			<if test='iid != null and iid != ""'>
+				AND IID = #{iid}
+			</if>
+			<if test='view_name != null and view_name != ""'>
+				AND view_name like '%' || upper(#{view_name}) || '%'
+			</if>
+		) vr
+		LEFT JOIN USER_TAB_COMMENTS TC ON VR.VIEW_NAME = TC.TABLE_NAME
+		LEFT JOIN T_COMMON_IP_CONFIG_INFO CI ON CI.IID = VR.IID
+		ORDER BY IP_ADDRESS,VIEW_NAME,VID
+ 	</select>
+
+	<!-- 级联删除视图配置信息 -->
+	<insert id="deleteViewConfigInfo" parameterType="java.lang.String">
+		BEGIN
+			DELETE FROM T_COMMON_IP_VIEW_RELATION WHERE VID = #{vid};
+			DELETE FROM T_COMMON_VIEW_COLUMN_RELATION WHERE VID = #{vid};
+		END;
+	</insert>
+
+	<!-- 新增视图配置信息(含字段配置) -->
+	<insert id="addViewConfigInfo" parameterType="java.util.Map">
+		<selectKey keyProperty="vid" resultType="java.lang.String" order="BEFORE">
+			SELECT sys_guid() vid FROM dual
+		</selectKey>
+		BEGIN
+			INSERT INTO T_COMMON_IP_VIEW_RELATION
+			  (VID, IID, VIEW_NAME)
+			VALUES
+			  (#{vid} ,#{iid}, #{view_name});
+			<foreach item="item" index="index" collection="columns">
+				INSERT INTO T_COMMON_VIEW_COLUMN_RELATION
+					(VID, COLUMN_NAME, AUTH_FLAG)
+				VALUES
+					(#{vid}, #{item.column_name}, #{item.auth_flag});
+			</foreach>
+		END;
+	</insert>
+
+	<select id="getViewColumnList"  parameterType="java.lang.String" resultType="com.common.curd.commoncurd.model.ViewColumnRelaVo">
+		SELECT
+			<if test='vid != null and vid != ""'>
+				CR.CID, CR.VID, CR.AUTH_FLAG, CR.UPDATE_TIME,
+			</if>
+			TC.*, CC.COMMENTS COLUMN_DESC
+		  FROM (SELECT TABLE_NAME VIEW_NAME,
+					   COLUMN_NAME,
+					   DATA_TYPE,
+					   DATA_LENGTH,
+					   NULLABLE
+				  FROM USER_TAB_COLS
+				 WHERE TABLE_NAME = #{view_name}) TC
+		  LEFT JOIN USER_COL_COMMENTS CC ON TC.VIEW_NAME = CC.TABLE_NAME
+										AND TC.COLUMN_NAME = CC.COLUMN_NAME
+		  <if test='vid != null and vid != ""'>
+			  LEFT JOIN (SELECT * FROM T_COMMON_VIEW_COLUMN_RELATION WHERE VID = #{vid}) CR ON CR.COLUMN_NAME =
+			  TC.COLUMN_NAME
+		  </if>
+	</select>
+
+	<!-- 新增/修改字段配置信息 -->
+	<insert id="addOrUpdateColumnConfigInfo" parameterType="java.util.Map">
+		MERGE INTO T_COMMON_VIEW_COLUMN_RELATION A
+		USING (SELECT #{cid,jdbcType=VARCHAR} CID,
+				#{vid,jdbcType=VARCHAR} VID,
+				#{column_name,jdbcType=VARCHAR} COLUMN_NAME,
+				#{auth_flag,jdbcType=VARCHAR} AUTH_FLAG
+			 FROM DUAL) B
+		ON (A.CID = B.CID)
+		WHEN MATCHED THEN
+		  UPDATE
+		   SET A.AUTH_FLAG  = B.AUTH_FLAG,
+					 A.UPDATE_TIME = SYSDATE
+			WHEN NOT MATCHED THEN
+			  INSERT
+				(A.VID, A.COLUMN_NAME, A.AUTH_FLAG)
+			  VALUES
+				(B.VID, B.COLUMN_NAME, B.AUTH_FLAG)
+	</insert>
+
+	<!-- 获取所有的视图/表信息 -->
+	<select id="getAllViewList"  parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT VIEW_NAME
+		FROM (SELECT VIEW_NAME
+				FROM USER_VIEWS
+				UNION
+				SELECT TABLE_NAME VIEW_NAME FROM USER_TABLES)
+		WHERE 1 = 1
+		<if test='view_name != null and view_name != ""'>
+			AND VIEW_NAME like '%' || UPPER(#{view_name}) || '%'
+		</if>
+		order by VIEW_NAME
+	</select>
+
+	<!-- 根据IP和视图名称查询授权字段 -->
+	<select id="getColumnsByIPAndViewName"  parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT WM_CONCAT(CR.COLUMN_NAME)
+		  FROM T_COMMON_IP_CONFIG_INFO CI
+		 INNER JOIN T_COMMON_IP_VIEW_RELATION VR ON CI.IID = VR.IID
+												AND CI.IP_ADDRESS =
+													#{ipAddress}
+												AND VR.VIEW_NAME = UPPER(#{viewName})
+		 INNER JOIN T_COMMON_VIEW_COLUMN_RELATION CR ON CR.VID = VR.VID AND CR.AUTH_FLAG <![CDATA[<>]]> 'N'
+ 	</select>
+</mapper>

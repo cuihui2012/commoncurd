@@ -1,5 +1,6 @@
 package com.common.curd.commoncurd.utils;
 
+import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +29,7 @@ public class ObjectValuedUtil {
         synchronized (exist) {
             exist.get(object.getClass().toString());
             if (fieldMap == null) {
-                fieldMap = new HashMap<String, Field>(10);
+                fieldMap = new HashMap<>(10);
                 Field[] fields = object.getClass().getDeclaredFields();
                 for (Field field : fields) {
                     field.setAccessible(true);
@@ -106,16 +107,20 @@ public class ObjectValuedUtil {
     @SuppressWarnings("unchecked")
     public static void setObjectValue(Object object, HttpServletRequest request) {
         Enumeration<String> em = request.getParameterNames();
-        Map<String, Object> values = new HashMap<String, Object>(10);
+        Map<String, Object> values = new HashMap<>(10);
         while (em.hasMoreElements()) {
-            String name = (String) em.nextElement();
+            String name = em.nextElement();
             values.put(name, request.getParameter(name));
         }
+
+        // 公共接口权限改造,放入自定义参数(查询项)
+        String selects = (String) request.getAttribute("selects");
+        if (!StringUtils.isEmpty(selects)) values.put("selects", selects);
 
         // 取拦截器中放入本地线程的request-body参数
         Map<String, Object> postParams = RequestThreadLocal.getPostRequestParams();
         if (postParams == null) {
-            postParams = new HashMap<String, Object>();
+            postParams = new HashMap<>();
         }
         values.putAll(postParams);
         setObjectValue(object, values);

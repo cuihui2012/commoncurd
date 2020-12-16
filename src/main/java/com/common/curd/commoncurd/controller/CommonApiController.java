@@ -45,23 +45,6 @@ public class CommonApiController{
         Result result = new Result();
         ObjectValuedUtil.setObjectValue(page, request);
 
-        //校验视图名称
-        if (StringUtils.isBlank((String) page.get("viewName"))) {
-            result.setCode(ResultCodeConstant.FAILURE_CODE);
-            result.setDesc("视图名称必填(viewName)");
-            ResponseUtil.successResult(response, result);
-            return;
-        }
-        //校验每页最大数
-        if (page.get("recordPerPage") != null) {
-            if(Integer.valueOf(page.get("recordPerPage").toString()) > Page.MAX_RECORD_PER_PAGE) {
-                result.setCode(ResultCodeConstant.FAILURE_CODE);
-                result.setDesc("超过最大recordPerPage[10000]");
-                ResponseUtil.successResult(response, result);
-                return;
-            }
-
-        }
         try {
             result = commonApiService.getDataByViewName(page);
             page = (Page) result.getData();

@@ -27,5 +27,5 @@ public interface ICommonApiDao {
 
 	public Map<String,Object> getExternalUrlInfo(Map<String,Object> paramMap);
 
-	public void collectRemoteAddr(@Param("remoteAddr") String remoteAddr);
+	public void insertRequestLogInfo(Map<String,Object> paramMap);
 }

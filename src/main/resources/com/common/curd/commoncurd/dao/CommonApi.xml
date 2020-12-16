@@ -15,7 +15,7 @@
 
 	<!-- 通过视图查询数据 -->
 	<select id="getDataByViewName" parameterType="java.util.Map" resultType="java.util.Map">
-		SELECT * FROM ${viewName} WHERE 1 = 1 ${condition}
+		SELECT ${selects} FROM ${viewName} WHERE 1 = 1 ${condition}
  	</select>
 
 	<!-- 查询视图/表字段是否存在 -->
@@ -89,17 +89,19 @@
 	<!-- 获取外部接口url -->
 	<select id="getExternalUrlInfo"  parameterType="java.util.Map" resultType="java.util.Map">
 		SELECT A.V_ID, A.V_TYPE, A.V_URL
-		  FROM API_URL_CONFIG A
+		  FROM T_COMMON_API_URL_CONFIG A
 		 WHERE A.V_ID = #{urlID}
 	</select>
 
-	<insert id="collectRemoteAddr" parameterType="java.lang.String">
-		MERGE INTO COLLECT_REMOTE_ADDR A
-		USING (SELECT #{remoteAddr} REMOTE_ADDR FROM DUAL) B
-		ON (A.REMOTE_ADDR = B.REMOTE_ADDR)
-		WHEN MATCHED THEN
-		  UPDATE SET A.REMOTE_COUNT = A.REMOTE_COUNT + 1, A.UPDATE_TIME = SYSDATE
-		WHEN NOT MATCHED THEN
-		  INSERT (A.REMOTE_ADDR) VALUES (B.REMOTE_ADDR)
+	<insert id="insertRequestLogInfo" parameterType="java.util.Map">
+		INSERT INTO T_COMMON_LOG_INFO
+		(IP_ADDRESS, URI_PATH, URL_PATH, METHOD, PARAM_FOLLOW, PARAM_ALL)
+		VALUES
+		(#{ip_address,jdbcType=VARCHAR},
+		 #{uri_path,jdbcType=VARCHAR},
+		 #{url_path,jdbcType=VARCHAR},
+		 #{method,jdbcType=VARCHAR},
+		 #{param_follow,jdbcType=VARCHAR},
+		 #{param_all,jdbcType=VARCHAR})
 	</insert>
 </mapper>

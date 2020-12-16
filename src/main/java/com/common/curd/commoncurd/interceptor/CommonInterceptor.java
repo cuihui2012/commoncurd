@@ -1,15 +1,13 @@
 package com.common.curd.commoncurd.interceptor;
 
-import com.common.curd.commoncurd.constant.ResultCodeConstant;
-import com.common.curd.commoncurd.model.Result;
+import com.alibaba.fastjson.JSON;
 import com.common.curd.commoncurd.service.ICommonApiService;
+import com.common.curd.commoncurd.utils.IPUtil;
+import com.common.curd.commoncurd.utils.ObjectValuedUtil;
 import com.common.curd.commoncurd.utils.RequestThreadLocal;
-import com.common.curd.commoncurd.utils.ResponseUtil;
 import com.google.gson.Gson;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
@@ -21,40 +19,30 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InterfaceInterceptor extends HandlerInterceptorAdapter {
+public class CommonInterceptor extends HandlerInterceptorAdapter {
 
-    private static Logger logger = LoggerFactory.getLogger(InterfaceInterceptor.class);
-
-    @Value("${IPWhiteList}")
-    private String IPWhiteList;
-
-    @Resource
-    public ICommonApiService commonApiService;
-
-    // 访问IP
-    private String clientIP;
+    private static Logger logger = LoggerFactory.getLogger(CommonInterceptor.class);
 
     // POST请求body参数
     private String param;
 
+    // 访问IP
+    private String clientIP;
+
+    @Resource
+    private ICommonApiService commonApiService;
+
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-        Result result = new Result();
+        logger.error("公共拦截器.......");
+
+        // 获取IP地址
+        clientIP = IPUtil.getClientIp(request);
 
         // 处理post请求body参数
         param = getBodyString(request.getReader());
         Gson gson = new Gson();
         Map<String,Object> postParam = gson.fromJson(param, HashMap.class);
         RequestThreadLocal.setPostRequestParams(postParam);
-
-        // 校验ip白名单
-        clientIP = getClientIp(request);
-        if (IPWhiteList.indexOf(clientIP) == -1) {
-            logger.error("IP访问限制---------->" + clientIP);
-            result.setCode(ResultCodeConstant.FAILURE_CODE);
-            result.setDesc("IP访问限制");
-            ResponseUtil.successResult(response, result);
-            return false;
-        }
 
         // 授权通过
         return true;
@@ -65,8 +53,21 @@ public class InterfaceInterceptor extends HandlerInterceptorAdapter {
      * 在Controller方法后进行拦截
      */
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        // 保存访问ip
-        commonApiService.collectRemoteAddr(clientIP);
+        // 保存请求日志
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("ip_address", clientIP);
+        String url_path = request.getRequestURL().toString();
+        String uri_path = url_path.substring(url_path.lastIndexOf("/")+1);
+        paramMap.put("url_path",url_path );
+        paramMap.put("uri_path", uri_path);
+        paramMap.put("method", request.getMethod());
+        // 链接后缀参数
+        paramMap.put("param_follow", request.getQueryString());
+        // 所有参数
+        Map<String, Object> param_all = new HashMap<>();
+        ObjectValuedUtil.setObjectValue(param_all, request);
+        paramMap.put("param_all", JSON.toJSONString(param_all));
+        commonApiService.insertRequestLogInfo(paramMap);
     }
 
     /**
@@ -74,30 +75,6 @@ public class InterfaceInterceptor extends HandlerInterceptorAdapter {
      */
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
 
-    }
-
-    /**
-     * 获取客户端IP
-     *
-     * @param request
-     * @return
-     */
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (!StringUtils.isEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)) {
-            //多次反向代理后会有多个ip值，第一个ip才是真实ip
-            int index = ip.indexOf(",");
-            if (index != -1) {
-                return ip.substring(0, index);
-            } else {
-                return ip;
-            }
-        }
-        ip = request.getHeader("X-Real-IP");
-        if (!StringUtils.isEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)) {
-            return ip;
-        }
-        return request.getRemoteAddr();
     }
 
     /**

@@ -20,5 +20,5 @@ public interface ICommonApiService {
 	public void addOrUpdateOrDeleteDataByTableNames(Map<String,Object> paramMap) throws Exception;
 	public Result executeExternalAPI(Map<String,Object> paramMap) throws Exception;
 
-	public void collectRemoteAddr(String remoteAddr);
+	public void insertRequestLogInfo(Map<String,Object> paramMap);
 }

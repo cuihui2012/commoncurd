@@ -6,9 +6,12 @@ import com.common.curd.commoncurd.dao.ICommonApiDao;
 import com.common.curd.commoncurd.model.Page;
 import com.common.curd.commoncurd.model.Result;
 import com.common.curd.commoncurd.service.ICommonApiService;
+import com.common.curd.commoncurd.utils.Base64Util;
 import com.common.curd.commoncurd.utils.CommonApiUtil;
+import com.common.curd.commoncurd.utils.Md5Util;
 import com.jfinal.kit.HttpKit;
 import com.jfinal.kit.JsonKit;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +36,22 @@ public class CommonApiService implements ICommonApiService {
 	public Result getDataByViewName(Page page) throws Exception {
 		Result result = new Result();
 		//校验视图是否存在
-		String count = commonApiDao.getViewNameInfo((String) page.get("viewName"));
+		String viewName = Base64Util.getFromBase64((String) page.get("viewName"));
+		String count = commonApiDao.getViewNameInfo(viewName);
 		// dblink访问表不进行表名校验
-		if (!"0".equals(count) || ((String) page.get("viewName")).contains("@")) {
+		if (!"0".equals(count) || viewName.contains("@")) {
+			// 解析后的表名重新赋值
+			page.put("viewName", viewName);
 			//获取自定义拼接条件
 			String condition = (String) page.get("condition");
-			if (condition != null && condition.length() != 0) {
-				if (CommonApiUtil.filterParam(page, "condition")) page.remove("condition");
+			if (!StringUtils.isEmpty(condition)) {
+				condition = Base64Util.getFromBase64(condition);
+				page.put("condition", " AND " + condition);
+				if (CommonApiUtil.filterParam(page, "condition")) {
+					page.remove("condition");
+					throw new Exception("字段condition非法");
+				}
+
 			} else {
 				//动态拼接sql文
 				concatConditionStr(page);
@@ -154,8 +166,8 @@ public class CommonApiService implements ICommonApiService {
 	}
 
 	@Override
-	public void collectRemoteAddr(String remoteAddr) {
-		commonApiDao.collectRemoteAddr(remoteAddr);
+	public void insertRequestLogInfo(Map<String,Object> paramMap){
+		commonApiDao.insertRequestLogInfo(paramMap);
 	}
 
 	/**
@@ -354,5 +366,11 @@ public class CommonApiService implements ICommonApiService {
 			}
 		}
 		return false;
+	}
+
+	public static void main(String[] args) {
+//		uname = '1111'
+//		12993243D5ECC4A7
+		System.out.println(Md5Util.getMd5_16("uname = '1111'"));
 	}
 }

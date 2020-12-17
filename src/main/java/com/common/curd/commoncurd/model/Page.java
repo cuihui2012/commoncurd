@@ -1,29 +1,26 @@
 package com.common.curd.commoncurd.model;
 
-import com.common.curd.commoncurd.utils.ObjectValuedUtil;
-
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * company 正元智慧
+ * company XXX
  *
- * @author cwt
- * @date 2018年7月13日下午12:34:56
+ * @author cuihui
+ * @date 2020年7月13日下午12:34:56
  * @Desc 分页类
  */
 public class Page<T> extends HashMap<String, Object> {
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3947564364677248170L;
 
-    public static Integer MAX_RECORD_PER_PAGE = 10000;
     /**
-     * 每页的数据条数
+     * 每页最大数据条数
      */
-    private int recordPerPage = 3000;
+    public static Integer MAX_RECORD_PER_PAGE = 10000;
+
+    /**
+     * 每页默认的数据条数
+     */
+    private int recordPerPage = 30;
 
     /**
      * 当前页
@@ -40,57 +37,28 @@ public class Page<T> extends HashMap<String, Object> {
      */
     private long recordNumbers;
 
-    private String ltSortName;
+    /**
+     * 排序字段
+     */
+    private String sortName;
 
-    private String ltSortOrder;
+    /**
+     * 升序/降序
+     */
+    private String sortOrder;
 
     private Object param;
 
-    private List<T> data;
-
-
     /**
-     * 从request中创建分页对象
-     *
-     * @param request
-     * @param c
-     * @return
+     * 结果数据
      */
-    public static final <S> Page<S> buildFromRequest(HttpServletRequest request, Class<S> c) {
-        Page<S> page = new Page<S>();
-        ObjectValuedUtil.setObjectValue(page, request);
-        return page;
-    }
-
-    public void wrapToMap() {
-        this.put("recordPerPage", recordPerPage);
-        this.put("curPage", curPage);
-        pageNumbers = (int) (recordNumbers / recordPerPage);
-        if (recordNumbers % recordPerPage != 0) {
-            pageNumbers++;
-        }
-        this.put("pageNumbers", pageNumbers);
-        this.put("recordNumbers", recordNumbers);
-        this.put("data", data);
-    }
-
-    public void wrapToPage() {
-        getCurPage();
-        getData();
-        getLtSortName();
-        getLtSortOrder();
-        getPageNumbers();
-        getRecordNumbers();
-        getParam();
-        getRecordPerPage();
-
-    }
-
+    private List<T> data;
 
     public int getRecordPerPage() {
         try {
-            recordPerPage = Integer.parseInt(this.get("recordPerPage") + "");
+            recordPerPage = this.get("recordPerPage") == null ? this.recordPerPage : Integer.parseInt(this.get("recordPerPage") + "");
         } catch (Exception e) {
+            // 默认30条
             recordPerPage = 30;
         }
 
@@ -104,8 +72,9 @@ public class Page<T> extends HashMap<String, Object> {
 
     public int getCurPage() {
         try {
-            curPage = Integer.parseInt(this.get("curPage") + "");
+            curPage = this.get("curPage") == null ? this.curPage : Integer.parseInt(this.get("curPage") + "");
         } catch (Exception e) {
+            // 默认第一页
             curPage = 1;
         }
         return curPage;
@@ -120,7 +89,7 @@ public class Page<T> extends HashMap<String, Object> {
         try {
             pageNumbers = Integer.parseInt(this.get("pageNumbers") + "");
         } catch (Exception e) {
-            pageNumbers = 30;
+            pageNumbers = 0;
         }
         return pageNumbers;
     }
@@ -161,40 +130,28 @@ public class Page<T> extends HashMap<String, Object> {
     }
 
     public void setParam(Object param) {
-        param = this.put("param", param);
         this.param = param;
+        this.put("param", param);
     }
 
-    public String getLtSortName() {
-        ltSortName = this.get("lt_sort_name") == null ? "" : this.get("lt_sort_name") + "";
-        return ltSortName;
+    public String getSortName() {
+        this.sortName = this.get("sortName") == null ? "" : this.get("sortName") + "";
+        return sortName;
     }
 
-    public void setLtSortName(String ltSortName) {
-        this.ltSortName = ltSortName.replace("'", null);
-        this.put("lt_sort_name", ltSortName);
+    public void setSortName(String sortName) {
+        this.sortName = sortName;
+        this.put("sortName", sortName);
     }
 
-    public String getLtSortOrder() {
-        ltSortOrder = this.get("lt_sort_order") == null ? "" : this.get("lt_sort_order") + "";
-        return ltSortOrder;
+    public String getSortOrder() {
+        sortOrder = this.get("sortOrder") == null ? "" : this.get("sortOrder") + "";
+        return sortOrder;
     }
 
-    public void setLtSortOrder(String ltSortOrder) {
-        this.ltSortOrder = ltSortOrder.replace("'", null);
-        this.put("lt_sort_order", ltSortOrder);
+    public void setSortOrder(String sortOrder) {
+        this.sortOrder = sortOrder;
+        this.put("sortOrder", sortOrder);
     }
-//	@Override
-//	 public Set<Map.Entry<String,Object>> entrySet() {
-//	    customAttrs=FiledsUtils.getObjectValue(this, "customAttrs");
-//	    System.out.println("customAttrs length is"+customAttrs.size());
-//	    Iterator<String> it =customAttrs.keySet().iterator();
-//	    while (it.hasNext()) {
-//             System.out.println(it.next());
-//
-//        }
-//        return super.entrySet();
-//    }
-
 }
 

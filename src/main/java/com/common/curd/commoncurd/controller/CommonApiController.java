@@ -47,8 +47,6 @@ public class CommonApiController{
 
         try {
             result = commonApiService.getDataByViewName(page);
-            page = (Page) result.getData();
-            page.wrapToPage();
             result.setDesc("查询成功!");
             result.setCode(ResultCodeConstant.SUCCESS_CODE);
         } catch (Exception e) {

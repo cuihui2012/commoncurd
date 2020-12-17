@@ -2,6 +2,7 @@ package com.common.curd.commoncurd.interceptor;
 
 import com.common.curd.commoncurd.model.Page;
 import com.common.curd.commoncurd.utils.ReflectUtil;
+import org.apache.commons.lang.StringUtils;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.executor.statement.RoutingStatementHandler;
 import org.apache.ibatis.executor.statement.StatementHandler;
@@ -84,8 +85,8 @@ public class PagenationInterceptor implements Interceptor {
     /**
      * @param
      * @return
-     * @author 蒋勇
-     * @Date: 2017年3月6日 下午4:14:27
+     * @author cuihui
+     * @Date: 2020年3月6日 下午4:14:27
      * @desc 获取Mysql数据库的分页查询语句
      */
 
@@ -100,7 +101,7 @@ public class PagenationInterceptor implements Interceptor {
 
 
     /**
-     * * 获取Oracle数据库的分页查询语句       * @param page 分页对象 
+     * * 获取Oracle数据库的分页查询语句 * @param page 分页对象 
      * * @param sqlBuffer 包含原sql语句的StringBuffer对象 
      * * @return Oracle数据库的分页查询语句       
      */
@@ -111,14 +112,12 @@ public class PagenationInterceptor implements Interceptor {
         pageSql.append(" SELECT * FROM (");
         pageSql.append("    SELECT A.*,ROWNUM RN FROM ( ");
         pageSql.append(sql);
-        if (page.getLtSortName() != null && !"".equals(page.getLtSortName())) {
+        if (!StringUtils.isEmpty(page.getSortName())) {
             // 子查询里面包含order by的情况
             if (!sql.toLowerCase().contains("order by")) {
                 pageSql.append(" order by ");
-            } else {
-                pageSql.append(" ");
+                pageSql.append(page.getSortName()).append(" ").append(page.getSortOrder());
             }
-            pageSql.append(page.getLtSortName()).append(" ").append(page.getLtSortName());
         }
         pageSql.append(" ) A ");
         pageSql.append("WHERE ROWNUM < " + (offset + page.getRecordPerPage()) + ") B WHERE B.RN >= " + offset + "");
@@ -127,7 +126,7 @@ public class PagenationInterceptor implements Interceptor {
 
 
     /**
-     * * 给当前的参数对象page设置总记录数       * 
+     * * 给当前的参数对象page设置总记录数
      * * @param page Mapper映射语句对应的参数对象 
      * * @param mappedStatement Mapper映射语句 
      * * @param connection 当前的数据库连接       
@@ -170,9 +169,7 @@ public class PagenationInterceptor implements Interceptor {
 
 
     /**
-     * * 根据原Sql语句获取对应的查询总记录数的Sql语句       * @param sql       * @return 
-     * *  修改人 lushuqun 修改时间 2014 年8月1号 修改备注：修改getCountSql 为不区分大小写，并增加对distinct 支持:
-     * “dinstinct( ”中间不能有空格      
+     * * 根据原Sql语句获取对应的查询总记录数的Sql语句
      */
     private String getCountSql(String sql) {
         return "SELECT COUNT(1) from (" + sql + ") temp";

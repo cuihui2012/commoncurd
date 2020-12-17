@@ -44,6 +44,19 @@ public class CommonInterceptor extends HandlerInterceptorAdapter {
         Map<String,Object> postParam = gson.fromJson(param, HashMap.class);
         RequestThreadLocal.setPostRequestParams(postParam);
 
+        // 允许跨域处理
+        response.setContentType("text/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragmal", "no-cache");
+        response.setDateHeader("Expires", 0);
+        response.setContentType("text/json;charset=utf-8");
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
+        response.addHeader("Access-Control-Max-Age", "1800");//30 min
+
         // 授权通过
         return true;
     }

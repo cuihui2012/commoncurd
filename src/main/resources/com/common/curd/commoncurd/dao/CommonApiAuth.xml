@@ -153,7 +153,9 @@
 
 	<!-- 根据IP和视图名称查询授权字段 -->
 	<select id="getColumnsByIPAndViewName"  parameterType="java.lang.String" resultType="java.lang.String">
-		SELECT WM_CONCAT(CR.COLUMN_NAME)
+		SELECT LISTAGG(CR.COLUMN_NAME, ',') WITHIN
+				 GROUP(
+				 ORDER BY CR.COLUMN_NAME)
 		  FROM T_COMMON_IP_CONFIG_INFO CI
 		 INNER JOIN T_COMMON_IP_VIEW_RELATION VR ON CI.IID = VR.IID
 												AND CI.IP_ADDRESS =

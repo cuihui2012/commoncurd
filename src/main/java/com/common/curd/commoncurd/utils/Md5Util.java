@@ -50,10 +50,4 @@ public class Md5Util {
         String md5 = getMd5_32(str);
         return StringUtils.upperCase(md5.substring(8, 24));
     }
-
-    public static void main(String[] args) {
-        String str = "dmlld05hbWU9VEFQUF9KU0NEUF9aQ19EV1pDU1lGWFRKJmNvbmRpdGlvbj1BTkQgc2pycSA9IChTRUxFQ1QgTUFYKHNqcnEpIEZST00gVEFQUF9KU0NEUF9aQ19EV1pDU1lGWFRKKQ==";
-        System.out.println(getMd5_16(str));
-        System.out.println(getMd5_32(str));
-    }
 }

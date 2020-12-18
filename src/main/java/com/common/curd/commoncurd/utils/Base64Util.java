@@ -15,12 +15,4 @@ public class Base64Util {
         s=new String(decodeBase64);
         return s;
     }
-
-    public static void main(String[] args) {
-        String a ="viewName=TAPP_JSCDP_ZC_DWZCSYFXTJ&condition=AND sjrq = (SELECT MAX(sjrq) FROM TAPP_JSCDP_ZC_DWZCSYFXTJ)";
-        String base64 = getBase64(a);
-        System.out.println(base64);
-        String fromBase64 = getFromBase64(base64);
-        System.out.println(fromBase64);
-    }
 }

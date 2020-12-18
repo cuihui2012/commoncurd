@@ -270,7 +270,6 @@ public class CommonApiAuthController {
         Map<String, Object> paramMap = new HashMap<>();
         ObjectValuedUtil.setObjectValue(paramMap, request);
 
-        System.out.println(paramMap);
         try {
             commonApiAuthService.addViewConfigInfo(paramMap);
             result.setDesc("新增成功!");

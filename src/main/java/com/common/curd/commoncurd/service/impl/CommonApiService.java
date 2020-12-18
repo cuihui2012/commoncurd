@@ -67,6 +67,8 @@ public class CommonApiService implements ICommonApiService {
 				}
 			}
 			page.remove("condition");
+			page.remove("selects");
+			page.remove("key");
 			page.setData(resultList);
 			result.setData(page);
 		} else {
@@ -366,11 +368,5 @@ public class CommonApiService implements ICommonApiService {
 			}
 		}
 		return false;
-	}
-
-	public static void main(String[] args) {
-//		uname = '1111'
-//		12993243D5ECC4A7
-		System.out.println(Md5Util.getMd5_16("uname = '1111'"));
 	}
 }

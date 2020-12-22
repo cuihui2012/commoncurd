@@ -6,10 +6,7 @@ import com.common.curd.commoncurd.dao.ICommonApiDao;
 import com.common.curd.commoncurd.model.IPConfigVo;
 import com.common.curd.commoncurd.model.Page;
 import com.common.curd.commoncurd.model.Result;
-import com.common.curd.commoncurd.utils.Base64Util;
-import com.common.curd.commoncurd.utils.IPUtil;
-import com.common.curd.commoncurd.utils.Md5Util;
-import com.common.curd.commoncurd.utils.ResponseUtil;
+import com.common.curd.commoncurd.utils.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +16,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
 
@@ -33,8 +32,8 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
     // 访问IP
     private String clientIP;
 
-    // 视图名称
-    private String viewName;
+    // 请求参数
+    private Map<String, Object> paramMap = new HashMap<>();
 
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         Result result = new Result();
@@ -53,16 +52,20 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
 
+        // 获取请求参数
+        ObjectValuedUtil.setObjectValue(paramMap, request);
+
         //校验视图名称
-        if (StringUtils.isEmpty(request.getParameter("viewName"))) {
+        Object viewName = paramMap.get("viewName");
+        if (viewName== null) {
             result.setCode(ResultCodeConstant.FAILURE_CODE);
             result.setDesc("视图名称必填(viewName)");
             ResponseUtil.successResult(response, result);
             return false;
         }
         //校验视图是否存在
-        viewName = Base64Util.getFromBase64(request.getParameter("viewName"));
-        String count = commonApiDao.getViewNameInfo(viewName);
+        String realViewName = Base64Util.getFromBase64((String) viewName);
+        String count = commonApiDao.getViewNameInfo(realViewName);
         if ("0".equals(count)){
             result.setCode(ResultCodeConstant.FAILURE_CODE);
             result.setDesc("视图名称非法");
@@ -70,9 +73,9 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
         //校验每页最大数
-        String recordPerPageStr = request.getParameter("recordPerPage");
-        if (!StringUtils.isEmpty(recordPerPageStr)) {
-            if(Integer.valueOf(recordPerPageStr) > Page.MAX_RECORD_PER_PAGE) {
+        Object recordPerPage = paramMap.get("recordPerPage");
+        if (recordPerPage != null) {
+            if(Integer.valueOf((String) recordPerPage) > Page.MAX_RECORD_PER_PAGE) {
                 result.setCode(ResultCodeConstant.FAILURE_CODE);
                 result.setDesc("超过最大recordPerPage[10000]");
                 ResponseUtil.successResult(response, result);
@@ -80,11 +83,11 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
             }
         }
 
-        String condition = request.getParameter("condition");
-        String key = request.getParameter("key");
+        Object condition = paramMap.get("condition");
+        Object key = paramMap.get("key");
         // 校验参数合法化
-        if (!StringUtils.isEmpty(condition)){
-            if (StringUtils.isEmpty(key) || (!StringUtils.isEmpty(key) && !Md5Util.getMd5_16(condition).equals(StringUtils.upperCase(key)))){
+        if (condition != null){
+            if (key == null || (key != null && !Md5Util.getMd5_16((String) condition).equals(StringUtils.upperCase((String) key)))){
                 result.setCode(ResultCodeConstant.FAILURE_CODE);
                 result.setDesc("condition参数不合法");
                 ResponseUtil.successResult(response, result);
@@ -96,7 +99,7 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
         if ("1".equals(ipConfigVo.getIs_opend())){
             request.setAttribute("selects", " * ");
         }else{
-            String columns = commonApiAuthDao.getColumnsByIPAndViewName(clientIP, viewName);
+            String columns = commonApiAuthDao.getColumnsByIPAndViewName(clientIP, realViewName);
             if (StringUtils.isEmpty(columns)){
                 result.setCode(ResultCodeConstant.FAILURE_CODE);
                 result.setDesc("数据未授权");

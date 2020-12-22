@@ -42,6 +42,7 @@ public class CommonSelectInterceptor extends HandlerInterceptorAdapter {
 
         // 获取IP地址
         clientIP = IPUtil.getClientIp(request);
+        logger.error("clientIP----------------->" + clientIP);
         // 获取IP配置信息
         IPConfigVo ipConfigVo = commonApiAuthDao.getIPConfigInfo(clientIP);
         // 查看ip是否可用(适配一键禁用IP)

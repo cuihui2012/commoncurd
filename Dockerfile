@@ -10,10 +10,12 @@ LABEL version="base"
 LABEL author="cuihui" email="751670441@qq.com" date="2020-12-31"
 LABEL description="commoncurd应用镜像"
 
-# 时区设置,或在run命令设置参数 -e TZ=Asia/Shanghai
-RUN apk add --no-cache tzdata \
+# 修改镜像源,时区设置,或在run命令设置参数 -e TZ=Asia/Shanghai,删除缓存包
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+   && apk add --no-cache tzdata \
    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-   && echo 'Asia/Shanghai' > /etc/timezone
+   && echo 'Asia/Shanghai' > /etc/timezone \
+   && rm -rf /var/cache/apk/*.tar.gz
 
 # 指定挂载目录,此处不作声明,在run命令直接设置参数 -v
 #VOLUME /tmp

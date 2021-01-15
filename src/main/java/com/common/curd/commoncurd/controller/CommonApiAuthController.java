@@ -214,7 +214,7 @@ public class CommonApiAuthController {
     }
 
     /**
-     * 删除字段配置信息
+     * 修改字段配置信息
      * @param request
      * @param response
      */
@@ -225,12 +225,12 @@ public class CommonApiAuthController {
         ObjectValuedUtil.setObjectValue(paramMap, request);
         try {
             commonApiAuthService.addOrUpdateColumnConfigInfo(paramMap);
-            result.setDesc("删除成功!");
+            result.setDesc("修改成功!");
             result.setCode(ResultCodeConstant.SUCCESS_CODE);
         } catch (Exception e) {
-            logger.error("删除失败", e);
+            logger.error("修改失败", e);
             result.setCode(ResultCodeConstant.FAILURE_CODE);
-            result.setDesc("删除失败！" + e.getMessage());
+            result.setDesc("修改失败！" + e.getMessage());
         }
         ResponseUtil.successResult(response, result);
     }
@@ -269,6 +269,23 @@ public class CommonApiAuthController {
         Result result = new Result();
         Map<String, Object> paramMap = new HashMap<>();
         ObjectValuedUtil.setObjectValue(paramMap, request);
+
+        String iid = (String) paramMap.get("iid");
+        String view_name = (String) paramMap.get("view_name");
+
+        if (StringUtils.isEmpty(iid)) {
+            result.setCode(ResultCodeConstant.FAILURE_CODE);
+            result.setDesc("iid字段不能为空");
+            ResponseUtil.successResult(response, result);
+            return;
+        }
+
+        if (StringUtils.isEmpty(view_name)) {
+            result.setCode(ResultCodeConstant.FAILURE_CODE);
+            result.setDesc("view_name字段不能为空");
+            ResponseUtil.successResult(response, result);
+            return;
+        }
 
         try {
             commonApiAuthService.addViewConfigInfo(paramMap);

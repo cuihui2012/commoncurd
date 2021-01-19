@@ -31,4 +31,5 @@ public interface ICommonApiAuthDao {
 	public List<String> getAllViewList(Page page);
 
 	public String getColumnsByIPAndViewName(@Param("ipAddress") String ipAddress, @Param("viewName") String viewName);
+	public String getColumnAuthFlag(@Param("ipAddress") String ipAddress, @Param("viewName") String viewName, @Param("columnName") String columnName);
 }

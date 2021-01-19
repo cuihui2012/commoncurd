@@ -163,4 +163,18 @@
 												AND VR.VIEW_NAME = UPPER(#{viewName})
 		 INNER JOIN T_COMMON_VIEW_COLUMN_RELATION CR ON CR.VID = VR.VID AND CR.AUTH_FLAG <![CDATA[<>]]> 'N'
  	</select>
+
+	<!-- 查询字段授权标志 -->
+	<select id="getColumnAuthFlag"  parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT CR.AUTH_FLAG
+		  FROM T_COMMON_IP_CONFIG_INFO CI
+		 INNER JOIN T_COMMON_IP_VIEW_RELATION VR ON CI.IID = VR.IID
+												AND CI.IP_ADDRESS =
+													#{ipAddress}
+												AND VR.VIEW_NAME =
+													UPPER(#{viewName})
+		 INNER JOIN T_COMMON_VIEW_COLUMN_RELATION CR ON CR.VID = VR.VID
+													AND CR.COLUMN_NAME =
+														UPPER(#{columnName})
+ 	</select>
 </mapper>

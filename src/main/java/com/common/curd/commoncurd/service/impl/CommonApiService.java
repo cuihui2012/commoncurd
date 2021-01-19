@@ -14,6 +14,7 @@ import com.jfinal.kit.JsonKit;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -103,38 +104,45 @@ public class CommonApiService implements ICommonApiService {
 		List<Map<String,Object>> paramList = (List<Map<String, Object>>) paramMap.get("deleteList");
 		for (int i = 0; i < paramList.size(); i++) {
 			Map<String,Object> tableMap = paramList.get(i);
-			String tableName = (String) tableMap.get("tableName");
-			String primaryKey = (String) tableMap.get("primaryKey");
-			String flagCol = (String) tableMap.get("flagCol");
-			String deleteType = (String) tableMap.get("deleteType");
 
-			//校验表名
+			//表名处理
+			String tableName = (String) tableMap.get("tableName");
 			checkTableName(tableName);
-			paramMap.put("tableName", tableName);
-			//校验主键字段
-			checkColName(tableName, primaryKey);
-			paramMap.put("primaryKey", primaryKey);
-			//校验删除类型
-			if(deleteType == null || deleteType.length() == 0) throw new Exception("删除类型(deleteType)必填 0-软删除 1-硬删除");
-			paramMap.put("primaryKey", primaryKey);
-			//校验删除的主键值,至少存在一个
-			List<String> pkVals = (List<String>)tableMap.get("primaryKeyVal");
-			if (pkVals == null || pkVals.size() == 0) throw new Exception("删除对象至少有一个(primaryKeyVal)");
-			paramMap.put("primaryKeyVal", pkVals);
-			if ("0".equals(deleteType)) {
-				//检验软删除标志字段
-				checkColName(tableName,flagCol);
-				paramMap.put("flagCol", flagCol);
-				//校验软删除标志字段值
-				String flagColVal = (String) tableMap.get("flagColVal");
-				if(flagColVal == null || flagColVal.length() == 0) throw new Exception("软删除标志字段值必填(flagColVal)");
-				paramMap.put("flagColVal", flagColVal);
-				//软删除
-				commonApiDao.softDeleteDataByTableName(paramMap);
-			} else {
-				//硬删除
-				commonApiDao.hardDeleteDataByTableName(paramMap);
+
+			//主键处理
+			List<String> primaryKeys = (List<String>) tableMap.get("primaryKeys");
+			List<String> primaryKeyVals = (List<String>) tableMap.get("primaryKeyVals");
+			if (CollectionUtils.isEmpty(primaryKeys) || CollectionUtils.isEmpty(primaryKeyVals) || primaryKeys.size() != primaryKeyVals.size()){
+				throw new Exception("主键字段键值对为空/不匹配");
 			}
+			StringBuffer whereSB = new StringBuffer();
+			for (int j = 0; j < primaryKeys.size(); j++) {
+				String primaryKey = primaryKeys.get(j);
+				String primaryKeyVal = primaryKeyVals.get(j);
+				//校验主键字段
+				checkColName(tableName, primaryKey);
+				//校验主键字段值(sql防注入)
+				boolean flag = CommonApiUtil.checkKeyValue(primaryKeyVal);
+				if (flag) {
+					throw new Exception("主键字段值存在隐患");
+				}
+				//拼接where条件
+				if (whereSB.length() == 0){
+					whereSB.append(" " + primaryKey + " = '" + primaryKeyVal + "' ");
+				} else {
+					whereSB.append(" AND " + primaryKey + " = '" + primaryKeyVal + "' ");
+				}
+			}
+
+			if (whereSB.length() > 0) {
+				paramMap.remove("tableName");
+				paramMap.remove("whereStr");
+				paramMap.put("tableName", tableName);
+				paramMap.put("whereStr", whereSB.toString());
+			}
+
+			//硬删除
+			commonApiDao.deleteDataByTableNames(paramMap);
 		}
 	}
 
@@ -228,11 +236,17 @@ public class CommonApiService implements ICommonApiService {
 		//修改字段
 		Map<String,Object> cols = (Map<String, Object>) tableMap.get("cols");
 		//条件字段
-		String primaryKey = (String) tableMap.get("primaryKey");
-		//检验字段
-		checkColName(tableName, primaryKey);
-		//拼接on条件
-		onSB.append(" A." + primaryKey + " = " + "B." + primaryKey + " ");
+		List<String> primaryKeys = (List<String>) tableMap.get("primaryKeys");
+		for (String primaryKey : primaryKeys){
+			//检验字段
+			checkColName(tableName, primaryKey);
+			//拼接on条件
+			if (onSB.length() == 0){
+				onSB.append(" A." + primaryKey + " = " + "B." + primaryKey + " ");
+			} else {
+				onSB.append(" AND A." + primaryKey + " = " + "B." + primaryKey + " ");
+			}
+		}
 
 		//获取序列参数(为空主键使用uuid,不为空使用序列)
 		String seqName = (String) tableMap.get("seqName");
@@ -241,7 +255,7 @@ public class CommonApiService implements ICommonApiService {
 		int j = 0;
 		for (String key : keySet) {
 			//处理主键(新增时主键为空)
-			if (primaryKey.equalsIgnoreCase(key) && ((String)cols.get(key)).length()==0){
+			if (primaryKeys.contains(key) && ((String)cols.get(key)).length()==0){
 				if (seqName == null || seqName.length() == 0) {
 					//无序列,使用uuid
 					cols.put(key, UUID.randomUUID().toString().replaceAll("-","").toUpperCase());
@@ -260,7 +274,7 @@ public class CommonApiService implements ICommonApiService {
 
 			//参数拼接
 			//cols过滤掉ons中的字段
-			if (!primaryKey.equalsIgnoreCase(key)){
+			if (!primaryKeys.contains(key)){
 				if (setSB.length() == 0){
 					setSB.append(" A." + key + " = B." + key + " ");
 				} else {
@@ -282,6 +296,20 @@ public class CommonApiService implements ICommonApiService {
 			}
 			j++;
 		}
+
+		// 新增/修改的时间字段更新
+		List<String> timeCols = (List<String>) tableMap.get("timeCols");
+		if (!CollectionUtils.isEmpty(timeCols)){
+			for (String timeCol : timeCols){
+				//检验字段
+				checkColName(tableName, timeCol);
+				//拼接新增/修改条件
+				setSB.append(" ,A." + timeCol + " = SYSDATE ");
+				insertSB.append(" ,A." + timeCol + " ");
+				valuesSB.append(" ,SYSDATE ");
+			}
+		}
+
 		if (selectSB.length() > 0) {
 			paramMap.remove("selectStr");
 			paramMap.remove("onStr");
@@ -326,13 +354,7 @@ public class CommonApiService implements ICommonApiService {
 		if (CommonConstant.keyList.contains(key))
 			return true;
 		//防sql注入简单过滤
-		boolean flag = false;
-		for (String str : CommonConstant.sqlList) {
-			if (( ((String) cols.get(key)).toUpperCase()).indexOf(str.toUpperCase()) != -1) {
-				flag = true;
-				break;
-			}
-		}
+		boolean flag = CommonApiUtil.checkKeyValue((String) cols.get(key));
 		if (flag) return true;
 		//过滤无效参数
 		Map<String, Object> colResult = commonApiDao.getColNameInfo(tableName, key);

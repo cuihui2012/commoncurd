@@ -22,8 +22,7 @@ public interface ICommonApiDao {
 	public String getNextSeqValue(@Param("seqName") String seqName);
 	public void addOrUpdateDataByTableNames(Map<String,Object> paramMap);
 
-	public void softDeleteDataByTableName(Map<String,Object> paramMap);
-	public void hardDeleteDataByTableName(Map<String,Object> paramMap);
+	public void deleteDataByTableNames(Map<String,Object> paramMap);
 
 	public Map<String,Object> getExternalUrlInfo(Map<String,Object> paramMap);
 

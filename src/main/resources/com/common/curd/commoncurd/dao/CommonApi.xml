@@ -54,36 +54,22 @@
 	<update id="addOrUpdateDataByTableNames" parameterType="java.util.Map">
 		MERGE INTO ${tableName} A
 				USING (SELECT ${selectStr}
-							  ,SYSDATE CJSJ
 						 FROM DUAL) B
 				ON (${onStr})
 				WHEN MATCHED THEN
 				  UPDATE
-					 SET ${setStr},A.CJSJ = B.CJSJ
+					 SET ${setStr}
 				WHEN NOT MATCHED THEN
 				  INSERT
-					(${insertStr},A.CJSJ)
+					(${insertStr})
 				  VALUES
-					(${valuesStr},B.CJSJ)
+					(${valuesStr})
 	</update>
 
-	<!-- 软删除数据接口 -->
-	<delete id="softDeleteDataByTableName" parameterType="java.util.Map">
-		UPDATE ${tableName} SET ${flagCol} = #{flagColVal}
-		WHERE ${primaryKey} IN
-		<foreach item="item" index="index" collection="primaryKeyVal"
-				 open="(" separator="," close=")">
-			#{item}
-		</foreach>
-	</delete>
-	<!-- 硬删除数据接口 -->
-	<delete id="hardDeleteDataByTableName" parameterType="java.util.Map">
+	<!-- 删除数据接口 -->
+	<delete id="deleteDataByTableNames" parameterType="java.util.Map">
 		DELETE FROM ${tableName}
-		WHERE ${primaryKey} IN
-		<foreach item="item" index="index" collection="primaryKeyVal"
-				 open="(" separator="," close=")">
-			#{item}
-		</foreach>
+		WHERE ${whereStr}
 	</delete>
 
 	<!-- 获取外部接口url -->
